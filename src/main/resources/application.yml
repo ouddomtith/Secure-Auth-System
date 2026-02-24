@@ -1,0 +1,73 @@
+spring:
+  application:
+    name: SecureAuthSystem
+
+  # ── Database ──────────────────────────────────────────
+  datasource:
+    url: jdbc:postgresql://localhost:5432/secure_auth_db
+    username: postgres
+    password: test123
+    driver-class-name: org.postgresql.Driver
+
+  # ── JPA ───────────────────────────────────────────────
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+
+  # ── Google OAuth2 ─────────────────────────────────────
+  security:
+    oauth2:
+      client:
+        registration:
+          google:
+            client-id: ${CLIENT_ID}
+            client-secret: ${CLIENT_SECRET}
+            scope:
+              - email
+              - profile
+  # ── Gmail SMTP ────────────────────────────────────────
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: vansoeurnouddom.com@gmail.com
+    password: ${MAIL_PASSWORD}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+
+# ── Server ────────────────────────────────────────────
+server:
+  port: 8080
+
+# ── JWT ───────────────────────────────────────────────
+app:
+  jwt:
+    secret: ${JWT_SECRET}
+    expiration: 86400000   # 24 hours in milliseconds
+  # ── OTP ─────────────────────────────────────────────
+  otp:
+    expiration-minutes: 5       # OTP expires in 5 minutes
+
+  # ── Trusted Device ───────────────────────────────────
+  trusted-device:
+    expiration-minutes: 2       # ← 2 mins for testing
+    # expiration-minutes: 10080  # ← uncomment for 7 days (7 * 24 * 60)
+
+  # ── VAPID (Web Push) ────────────────────────────────
+  vapid:
+    public-key: ${WEB_PUSH_PUBLIC_KEY}
+    private-key: ${WEB_PUSH_PRIVATE_KEY}
+    subject: mailto:vansoeurnouddom.com@email.com
+
+# ── Logging ───────────────────────────────────────────
+logging:
+  level:
+    org.springframework.security: DEBUG
+    org.hibernate.SQL: DEBUG
