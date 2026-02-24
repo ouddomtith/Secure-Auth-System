@@ -1,0 +1,27 @@
+package org.application.secureauthsystem.config;
+
+import lombok.AllArgsConstructor;
+import org.application.secureauthsystem.repository.UserRepository;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
+
+@Configuration
+@AllArgsConstructor
+public class UserDetailsServiceConfig {
+
+    private final UserRepository userRepository;
+
+    @Bean
+    public UserDetailsService userDetailsService() {
+        return email -> userRepository.findByEmail(email)
+                .map(user -> org.springframework.security.core.userdetails.User
+                        .withUsername(user.getEmail())
+                        .password(user.getPassword())
+                        .roles(user.getRole().name())
+                        .build()
+                )
+                .orElseThrow(() -> new UsernameNotFoundException("User not found: " + email));
+    }
+}
