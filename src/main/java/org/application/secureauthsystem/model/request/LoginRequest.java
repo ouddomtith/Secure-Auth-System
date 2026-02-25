@@ -13,7 +13,4 @@ public class LoginRequest {
 
     @NotBlank(message = "Password is required")
     private String password;
-
-    // ← optional, null = first time login
-    private String deviceToken;
 }

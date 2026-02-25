@@ -7,4 +7,5 @@ public interface TrustedDeviceService {
     boolean isTrustedDevice(String deviceToken);
     void removeTrustedDevice(String deviceToken);
     void removeAllExpiredDevices(User user);
+    boolean hasActiveTrustedDevice(User user);
 }

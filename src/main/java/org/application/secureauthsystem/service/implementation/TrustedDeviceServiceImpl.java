@@ -76,4 +76,11 @@ public class TrustedDeviceServiceImpl implements TrustedDeviceService {
                 LocalDateTime.now()
         );
     }
+    // ── Check If User Has Any Active Trusted Device ──────
+    @Override
+    public boolean hasActiveTrustedDevice(User user) {
+        return trustedDeviceRepository
+                .existsByUserAndExpiresAtAfter(user, LocalDateTime.now());
+    }
+
 }

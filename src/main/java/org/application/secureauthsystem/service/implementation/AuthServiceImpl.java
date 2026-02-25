@@ -53,9 +53,11 @@ public class AuthServiceImpl implements AuthService {
                 .build();
     }
 
+    // ── Login ────────────────────────────────────────────
     @Override
-    public ApiResponse<String> login(LoginRequest request) {
-        // Authenticate
+    public ApiResponse<AuthResponse> login(LoginRequest request) {
+
+        // Step 1 - Authenticate email + password
         authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(
                         request.getEmail(),
@@ -63,34 +65,40 @@ public class AuthServiceImpl implements AuthService {
                 )
         );
 
-        // Get user
+        // Step 2 - Get user from DB
         User user = userRepository.findByEmail(request.getEmail())
                 .orElseThrow(() -> new RuntimeException("User not found!"));
 
-        // Check trusted device
-        // ← Add this null check!
-        if (request.getDeviceToken() != null &&
-                trustedDeviceService.isTrustedDevice(request.getDeviceToken())) {
-            String token = jwtService.generateToken(user.getEmail());
-            return ApiResponse.<String>builder()
+        // Step 3 - Check if user has active trusted device in DB
+        if (trustedDeviceService.hasActiveTrustedDevice(user)) {
+            // ← Skip OTP, return JWT + user directly
+            return ApiResponse.<AuthResponse>builder()
                     .message("Login successful (trusted device)")
-                    .payload(token)
+                    .payload(AuthResponse.builder()
+                            .token(jwtService.generateToken(user.getEmail()))
+                            .tokenType("Bearer")
+                            .deviceToken(null)
+                            .user(userMapper.toDTO(user))
+                            .build())
                     .status(HttpStatus.OK)
                     .build();
         }
 
-        // Send OTP
+        // Step 4 - No trusted device → send OTP
         otpService.generateAndSendOtp(user.getEmail());
 
-        return ApiResponse.<String>builder()
+        // ← Return null payload means OTP was sent
+        return ApiResponse.<AuthResponse>builder()
                 .message("OTP sent to " + user.getEmail())
                 .payload(null)
                 .status(HttpStatus.OK)
                 .build();
     }
 
+    // ── Verify OTP ───────────────────────────────────────
     @Override
     public ApiResponse<AuthResponse> verifyOtp(VerifyOtpRequest request) {
+
         // Step 1 - Verify OTP code
         otpService.verifyOtp(request.getEmail(), request.getOtpCode());
 
@@ -107,7 +115,7 @@ public class AuthServiceImpl implements AuthService {
             deviceToken = trustedDeviceService.generateDeviceToken(user);
         }
 
-        // Step 5 - Return response
+        // Step 5 - Return JWT + user
         return ApiResponse.<AuthResponse>builder()
                 .message("Login successful")
                 .payload(AuthResponse.builder()
